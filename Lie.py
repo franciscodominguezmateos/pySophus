@@ -58,11 +58,11 @@ class so2(Algebra):
 
     def __init__(self, **kwargs):
         if "theta" in kwargs:
-            self.theta = kwargs["theta"]
+            self.angle = kwargs["theta"]
         elif "matrix" in kwargs:
-            self.theta = kwargs["matrix"][1, 0]
+            self.angle = kwargs["matrix"][1, 0]
         elif "vector" in kwargs:
-            self.theta = kwargs["vector"][0]
+            self.angle = kwargs["vector"][0]
         else:
             raise TypeError("Argument must be theta, matrix or vector")
 
@@ -73,7 +73,7 @@ class so2(Algebra):
         return R.log()
 
     def exp(self):
-        theta = self.theta
+        theta = self.angle
         cs = math.cos(theta)
         sn = math.sin(theta)
         R = np.matrix([[cs, -sn],
@@ -81,13 +81,13 @@ class so2(Algebra):
         return SO2(matrix=R)
 
     def matrix(self):
-        return self.theta * so2.G
+        return self.angle * so2.G
 
     def vector(self):
-        return np.array([self.theta])
+        return np.array([self.angle])
 
     def theta(self):
-        return self.theta
+        return self.angle
 
 
 class SE2(Group):
@@ -101,7 +101,7 @@ class SE2(Group):
         # TODO testear caso theta = 0
         w = SO2(self.M[0:2, 0:2])
         t = self.M[0:2, 2]
-        theta = w.log().theta()
+        theta = w.log().angle()
         cs = math.cos(theta)
         sn = math.sin(theta)
         A = sn / theta if theta != 0 else 1
