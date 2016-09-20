@@ -39,7 +39,7 @@ class SO2(Group):
         self.M = matrix
 
     def __mul__(self, other):
-        return self.M * other.matrix()
+        return SO2(self.M.dot(other.matrix()))
 
     def matrix(self):
         return self.M
@@ -69,7 +69,7 @@ class so2(Algebra):
     def __add__(self, op):
         R1 = self.exp()
         R2 = op.exp()
-        R = SO2(R1 * R2)
+        R = R1 * R2
         return R.log()
 
     def exp(self):
@@ -111,6 +111,9 @@ class SE2(Group):
         Vt = V1 * t
         return se2(np.array([theta, Vt[0], Vt[1]]))
 
+    def __mul__(self, other):
+        return SE2(self.M.dot(other.matrix()))
+
 
 class se2(Algebra):
     G1 = np.matrix([[0, -1, 0],
@@ -137,8 +140,7 @@ class se2(Algebra):
         R1 = self.exp()
         R2 = op.exp()
         R = R1 * R2
-        s = SE2(R)
-        return s.log()
+        return R.log()
 
     def exp(self):
         theta = self.w[0]
@@ -184,8 +186,11 @@ class SO3(Group):
             logR = theta / (2 * sn) * (self.M - self.M.T)
             return so3(vector=np.array([logR[2, 1], logR[0, 2], logR[1, 0]]))
 
+    def matrix(self):
+        return self.M
+
     def __mul__(self, other):
-        return self.M * other.R
+        return SO3(self.M.dot(other.matrix()))
 
 
 class so3(Algebra):
@@ -215,8 +220,7 @@ class so3(Algebra):
         R1 = self.exp()
         R2 = op.exp()
         R = R1 * R2
-        s = SO3(R)
-        return s.log()
+        return R.log()
 
     def magnitude(self):
         return np.linalg.norm(self.w)
@@ -242,7 +246,10 @@ class SE3(Group):
         self.M = matrix
 
     def __mul__(self, other):
-        return self.M * other.M
+        return SE3(self.M.dot(other.matrix()))
+
+    def matrix(self):
+        return self.M
 
     def log(self):
         R = self.M[0:3, 0:3]
@@ -254,7 +261,7 @@ class SE3(Group):
         wx = w.matrix()
         wx2 = wx.dot(wx)
         A = sin(theta) / theta if theta != 0 else 1
-        B = (1 - cos(theta)) / (theta**2) if theta != 0 else 1/2
+        B = (1 - cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
         V = I - 1 / 2 * wx + 1 / (theta ** 2) * (1 - A / (2 * B)) * wx2 if theta != 0 else I
 
         v = V.dot(t)
@@ -309,8 +316,7 @@ class se3(Algebra):
         R1 = self.exp()
         R2 = op.exp()
         R = R1 * R2
-        s = SE3(R)
-        return s.log()
+        return R.log()
 
     def vector(self):
         return self.w
@@ -330,14 +336,14 @@ class se3(Algebra):
         I = np.eye(3)
         wx = w.matrix()
         wx2 = wx.dot(wx)
-        A = (1 - np.cos(theta)) / (theta**2) if theta != 0 else 1/2
-        B = (theta - np.sin(theta))/(theta**3) if theta != 0 else 1/6
+        A = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
+        B = (theta - np.sin(theta)) / (theta ** 3) if theta != 0 else 1 / 6
         V = I + A * wx + B * wx2
         t = V.dot(t)
 
         T = np.eye(4)
-        T[0:3,0:3] = R
-        T[0:3,3] = t
+        T[0:3, 0:3] = R
+        T[0:3, 3] = t
         return SE3(T)
 
     def oldV(self):
