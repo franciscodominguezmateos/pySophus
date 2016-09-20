@@ -66,6 +66,9 @@ class so2(Algebra):
         else:
             raise TypeError("Argument must be theta, matrix or vector")
 
+        if self.angle > np.pi or self.angle < -np.pi:
+            self.angle = self.angle % np.pi
+
     def __add__(self, op):
         R1 = self.exp()
         R2 = op.exp()
