@@ -1,8 +1,8 @@
 from unittest import TestCase
 from Lie import *
 import numpy as np
-from equalWithError import equalWithError
-from test import test_expLog
+from tests.auxiliaryOperations import equalWithError
+from auxiliaryOperations import test_expLog
 
 
 class TestSo2(TestCase):
