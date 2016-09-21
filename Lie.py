@@ -5,7 +5,6 @@ Created on Mar 2, 2016
 Lie group SO(2) a 2x2matrix
 Lie algebra so(2) a number
 '''
-from visual import *
 import numpy as np
 
 
@@ -49,13 +48,14 @@ class SO2(Group):
 
     def J(self):
         # TODO realmente tendria que estar aqui?
-        return so2.G * self.M
+        return so2_G * self.M
+
+
+so2_G = np.matrix([[0, -1],
+                   [1, 0]])
 
 
 class so2(Algebra):
-    G = np.matrix([[0, -1],
-                   [1, 0]])
-
     def __init__(self, **kwargs):
         if "theta" in kwargs:
             self.angle = kwargs["theta"]
@@ -66,8 +66,8 @@ class so2(Algebra):
         else:
             raise TypeError("Argument must be theta, matrix or vector")
 
-        if self.angle > np.pi or self.angle < -np.pi:
-            self.angle = self.angle % np.pi
+        if self.angle >= np.pi or self.angle <= -np.pi:
+            self.angle = np.arctan2(np.sin(self.angle), np.cos(self.angle))
 
     def __add__(self, op):
         R1 = self.exp()
@@ -77,14 +77,14 @@ class so2(Algebra):
 
     def exp(self):
         theta = self.angle
-        cs = math.cos(theta)
-        sn = math.sin(theta)
+        cs = np.cos(theta)
+        sn = np.sin(theta)
         R = np.matrix([[cs, -sn],
                        [sn, cs]])
         return SO2(matrix=R)
 
     def matrix(self):
-        return self.angle * so2.G
+        return self.angle * so2_G
 
     def vector(self):
         return np.array([self.angle])
@@ -105,8 +105,8 @@ class SE2(Group):
         w = SO2(self.M[0:2, 0:2])
         t = self.M[0:2, 2]
         theta = w.log().angle()
-        cs = math.cos(theta)
-        sn = math.sin(theta)
+        cs = np.cos(theta)
+        sn = np.sin(theta)
         A = sn / theta if theta != 0 else 1
         B = (1 - cs) / theta if theta != 0 else 0
         V1 = 1 / (A ** 2 + B ** 2) * np.matrix([[A, B],
@@ -119,6 +119,7 @@ class SE2(Group):
 
 
 class se2(Algebra):
+    # TODO extract algebra base from class to avoid overusing memory
     G1 = np.matrix([[0, -1, 0],
                     [1, 0, 0],
                     [0, 0, 0]])
@@ -147,8 +148,8 @@ class se2(Algebra):
 
     def exp(self):
         theta = self.w[0]
-        cs = math.cos(theta)
-        sn = math.sin(theta)
+        cs = np.cos(theta)
+        sn = np.sin(theta)
         w = so2(theta=theta)
 
         t = self.w[1:3]
@@ -175,7 +176,7 @@ class SO3(Group):
         self.M = matrix
 
     def log(self):
-        if (np.array_equal(np.eye(3), self.M)):
+        if np.array_equal(np.eye(3), self.M):
             # case theta == 0
             return so3(np.array([0, 0, 0]))
         elif (np.trace(self.M) == -1):
@@ -184,8 +185,8 @@ class SO3(Group):
             return so3(w)
         else:
             cs = (self.M.trace() - 1) / 2
-            theta = math.acos(cs)
-            sn = math.sin(theta)
+            theta = np.acos(cs)
+            sn = np.sin(theta)
             logR = theta / (2 * sn) * (self.M - self.M.T)
             return so3(vector=np.array([logR[2, 1], logR[0, 2], logR[1, 0]]))
 
@@ -197,6 +198,7 @@ class SO3(Group):
 
 
 class so3(Algebra):
+    # TODO extract algebra base from class to avoid overusing memory
     G1 = np.matrix([[0, 0, 0],
                     [0, 0, -1],
                     [0, 1, 0]])
@@ -263,8 +265,8 @@ class SE3(Group):
         theta = w.magnitude()
         wx = w.matrix()
         wx2 = wx.dot(wx)
-        A = sin(theta) / theta if theta != 0 else 1
-        B = (1 - cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
+        A = np.sin(theta) / theta if theta != 0 else 1
+        B = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
         V = I - 1 / 2 * wx + 1 / (theta ** 2) * (1 - A / (2 * B)) * wx2 if theta != 0 else I
 
         v = V.dot(t)
@@ -272,6 +274,7 @@ class SE3(Group):
 
 
 class se3(Algebra):
+    # TODO extract algebra base from class to avoid overusing memory
     G1 = np.matrix([[0, 0, 0, 0],
                     [0, 0, -1, 0],
                     [0, 1, 0, 0],
@@ -327,7 +330,7 @@ class se3(Algebra):
     def matrix(self):
         x = np.zeros((4, 4))
         for i in range(6):
-            x += twist[i] * eval("G" + str(i + 1))
+            x += self.w[i] * eval("G" + str(i + 1))
         return x
 
     def exp(self):
@@ -380,21 +383,3 @@ class se3(Algebra):
         A[0:2, 0:2] = wx
         A[0:2, 3] = t
         return A
-
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    theta = -math.pi / 4
-    cs = math.cos(theta)
-    sn = math.sin(theta)
-    tx = 5
-    ty = 5
-    T = np.matrix([[cs, -sn, tx],
-                   [sn, cs, ty],
-                   [0, 0, 1]])
-    pose = SE2(T)
-    print pose.T
-    twist = pose.log()
-    print twist
-    posei = twist.exp()
-    print posei.T
