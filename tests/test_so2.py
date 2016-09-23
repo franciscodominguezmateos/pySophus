@@ -2,20 +2,14 @@ from unittest import TestCase
 from Lie import *
 import numpy as np
 from tests.auxiliaryOperations import equalWithError
-from auxiliaryOperations import test_expLog
+from auxiliaryOperations import test_expLog, testvalues
 
 
 class TestSo2(TestCase):
     def setUp(self):
-        thetas = np.linspace(-2, 2, num=1 + 4 * 8) * np.pi
         self.testElements = []
-        for theta in thetas:
-            self.testElements.append(so2(theta=theta))
-
-        tens = np.power(10, np.linspace(0, 10, 11))
-        for num in tens:
-            smallNum = 1 / num
-            self.testElements.append(so2(theta=smallNum))
+        for value in testvalues:
+            self.testElements.append(so2(theta=value))
 
     def test_expLog(self):
         ok = test_expLog(self.testElements)
