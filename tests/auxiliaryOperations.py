@@ -1,5 +1,10 @@
 import numpy as np
 
+testvalues = np.linspace(-2, 2, num=1 + 4 * 8) * np.pi
+tens = np.power(10, np.linspace(0, 10, 11))
+smallvalues = list(map(lambda a: 1 / a, tens))
+testvalues = np.append(testvalues, smallvalues)
+
 
 def twoOperations(elements, op1, op2):
     passed = True
@@ -8,7 +13,7 @@ def twoOperations(elements, op1, op2):
         b = eval("e." + op1 + "()." + op2 + "().matrix()")
         ok = equalWithError(a, b)
         if not ok:
-            print("Error with " + str(e.vector()) + " in " + op1 + "," + op2)
+            print("Error with " + str(e.matrix()) + " in " + op1 + "," + op2)
             passed = False
     return passed
 
