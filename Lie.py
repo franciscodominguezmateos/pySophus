@@ -48,14 +48,14 @@ class SO2(Group):
 
     def J(self):
         # TODO realmente tendria que estar aqui?
-        return so2_G * self.M
+        return so2.G * self.M
 
 
-so2_G = np.matrix([[0, -1],
-                   [1, 0]])
 
 
 class so2(Algebra):
+    G = np.matrix([[0, -1],
+                   [1, 0]])
     def __init__(self, **kwargs):
         if "theta" in kwargs:
             self.angle = kwargs["theta"]
@@ -84,7 +84,7 @@ class so2(Algebra):
         return SO2(matrix=R)
 
     def matrix(self):
-        return self.angle * so2_G
+        return self.angle * so2.G
 
     def vector(self):
         return np.array([self.angle])
@@ -93,6 +93,7 @@ class so2(Algebra):
         return self.angle
 
 
+# TODO SE2/se2: define if A*B/a+b should be A(B(point)) or B(A(point))
 class SE2(Group):
     def __init__(self, matrix):
         self.M = matrix
@@ -104,22 +105,21 @@ class SE2(Group):
         # TODO testear caso theta = 0
         w = SO2(self.M[0:2, 0:2])
         t = self.M[0:2, 2]
-        theta = w.log().angle()
+        theta = w.log().theta()
         cs = np.cos(theta)
         sn = np.sin(theta)
         A = sn / theta if theta != 0 else 1
         B = (1 - cs) / theta if theta != 0 else 0
         V1 = 1 / (A ** 2 + B ** 2) * np.matrix([[A, B],
                                                 [-B, A]])
-        Vt = V1 * t
-        return se2(np.array([theta, Vt[0], Vt[1]]))
+        Vt = V1.dot(t)
+        return se2(vector=np.array([theta, Vt[0, 0], Vt[0, 1]]))
 
     def __mul__(self, other):
         return SE2(self.M.dot(other.matrix()))
 
 
 class se2(Algebra):
-    # TODO extract algebra base from class to avoid overusing memory
     G1 = np.matrix([[0, -1, 0],
                     [1, 0, 0],
                     [0, 0, 0]])
@@ -139,6 +139,9 @@ class se2(Algebra):
             self.w = kwargs["vector"]
         else:
             raise TypeError("Argument must be matrix or vector")
+
+        if self.w[0] >= np.pi or self.w[0] <= -np.pi:
+            self.w[0] = np.arctan2(np.sin(self.w[0]), np.cos(self.w[0]))
 
     def __add__(self, op):
         R1 = self.exp()
@@ -176,16 +179,18 @@ class SO3(Group):
         self.M = matrix
 
     def log(self):
-        if np.array_equal(np.eye(3), self.M):
+        if np.linalg.norm(np.eye(3)- self.M)<0.0000001:
             # case theta == 0
-            return so3(np.array([0, 0, 0]))
+            return so3(vector=np.array([0, 0, 0]))
         elif (np.trace(self.M) == -1):
             # case theta == pi
+            # TODO check formula because sometimes this isn't correct
             w = 1 / np.sqrt(2 * (1 + self.M[2, 2])) * np.array([self.M[0, 2], self.M[1, 2], 1 + self.M[2, 2]])
-            return so3(w)
+            return so3(vector=w)
         else:
+            # [0,0] added at the end because trace returns a matrix
             cs = (self.M.trace() - 1) / 2
-            theta = np.acos(cs)
+            theta = np.arccos(cs)
             sn = np.sin(theta)
             logR = theta / (2 * sn) * (self.M - self.M.T)
             return so3(vector=np.array([logR[2, 1], logR[0, 2], logR[1, 0]]))
@@ -198,7 +203,7 @@ class SO3(Group):
 
 
 class so3(Algebra):
-    # TODO extract algebra base from class to avoid overusing memory
+
     G1 = np.matrix([[0, 0, 0],
                     [0, 0, -1],
                     [0, 1, 0]])
@@ -236,7 +241,7 @@ class so3(Algebra):
         cs = np.cos(theta)
         sn = np.sin(theta)
         I = np.eye(3)
-        R = I + (sn / theta) * wx + ((1 - cs) / theta ** 2) * wx * wx if theta != 0 else I
+        R = I + (sn / theta) * wx + ((1 - cs) / theta ** 2) * wx.dot(wx) if theta != 0 else I
         return SO3(R)
 
     def vector(self):
@@ -270,11 +275,11 @@ class SE3(Group):
         V = I - 1 / 2 * wx + 1 / (theta ** 2) * (1 - A / (2 * B)) * wx2 if theta != 0 else I
 
         v = V.dot(t)
-        return se3(vector=np.append(w, v))
+        return se3(vector=np.append(w.vector(), v))
 
 
 class se3(Algebra):
-    # TODO extract algebra base from class to avoid overusing memory
+
     G1 = np.matrix([[0, 0, 0, 0],
                     [0, 0, -1, 0],
                     [0, 1, 0, 0],
@@ -357,8 +362,8 @@ class se3(Algebra):
         w = so3(self.w[3:5, 0])
         wx = w.matrix()
         theta = w.magnitude()
-        cs = math.cos(theta)
-        sn = math.sin(theta)
+        cs = np.cos(theta)
+        sn = np.sin(theta)
         I3 = np.eye(3, 3)
         V = I3 + (1 - cs) / theta ** 2 * wx + (theta - sn) / theta ** 3 * wx * wx
         return V
