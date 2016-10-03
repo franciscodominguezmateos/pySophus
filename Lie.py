@@ -33,6 +33,7 @@ class Group:
 
 class SO2(Group):
     """2D rotation Lie group"""
+
     def __init__(self, matrix):
         """Group element constructor
         :param matrix: 2D rotation matrix (2x2)
@@ -139,6 +140,7 @@ class so2(Algebra):
 # TODO SE2/se2: define if A*B/a+b should be A(B(point)) or B(A(point))
 class SE2(Group):
     """2D transformation Lie group"""
+
     def __init__(self, matrix):
         """Group element constructor
         :param matrix: 2D transformation matrix (3x3)
@@ -261,6 +263,7 @@ class se2(Algebra):
 
 class SO3(Group):
     """3D rotation Lie group"""
+
     def __init__(self, matrix):
         """Group element constructor
         :param matrix: 3D rotation matrix (3x3)
@@ -273,17 +276,23 @@ class SO3(Group):
         :return: algebra element associated with this group element
         :rtype: so3
         """
-        if np.linalg.norm(np.eye(3) - self.M) < 0.0000001:
+        error = 0.0000001
+        if np.linalg.norm(np.eye(3) - self.M) < error:
             # case theta == 0
             return so3(vector=np.array([0, 0, 0]))
-        elif (np.trace(self.M) == -1):
+        elif np.abs(np.trace(self.M) + 1) < error:
             # case theta == pi
-            # TODO check formula because sometimes this isn't correct
-            w = 1 / np.sqrt(2 * (1 + self.M[2, 2])) * np.array([self.M[0, 2], self.M[1, 2], 1 + self.M[2, 2]])
+            if self.M[0, 0] > 0:
+                w = 1 / np.sqrt(2 * (1 + self.M[0, 0])) * np.array([1 + self.M[0, 0], self.M[1, 0], self.M[2, 0]])  # wx
+            elif self.M[1, 1] > error:
+                w = 1 / np.sqrt(2 * (1 + self.M[1, 1])) * np.array([self.M[0, 1], 1 + self.M[1, 1], self.M[2, 1]])  # wy
+            else:
+                w = 1 / np.sqrt(2 * (1 + self.M[2, 2])) * np.array([self.M[0, 2], self.M[1, 2], 1 + self.M[2, 2]])  # wz
+            w = np.pi * w
             return so3(vector=w)
         else:
             # [0,0] added at the end because trace returns a matrix
-            cs = (self.M.trace() - 1) / 2
+            cs = (np.trace(self.M) - 1) / 2
             theta = np.arccos(cs)
             sn = np.sin(theta)
             logR = theta / (2 * sn) * (self.M - self.M.T)
@@ -384,6 +393,7 @@ class so3(Algebra):
 
 class SE3(Group):
     """3D transformation Lie group"""
+
     def __init__(self, matrix):
         """Group element constructor
         :param matrix: 3D transformation matrix (4x4)
