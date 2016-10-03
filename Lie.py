@@ -426,7 +426,7 @@ class SE3(Group):
         w = SO3(R).log()
         t = self.M[0:3, 3]
 
-        I = np.eye(3)
+        """I = np.eye(3)
         theta = w.magnitude()
         wx = w.matrix()
         wx2 = wx.dot(wx)
@@ -434,7 +434,9 @@ class SE3(Group):
         B = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
         V = I - 1 / 2 * wx + 1 / (theta ** 2) * (1 - A / (2 * B)) * wx2 if theta != 0 else I
 
-        v = V.dot(t)
+        v = V.dot(t)"""
+        v=t
+
         return se3(vector=np.append(w.vector(), v))
 
 
@@ -526,14 +528,14 @@ class se3(Algebra):
         R = w.exp().matrix()
         t = self.w[3:6]
 
-        theta = w.magnitude()
+        """theta = w.magnitude()
         I = np.eye(3)
         wx = w.matrix()
         wx2 = wx.dot(wx)
         A = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
         B = (theta - np.sin(theta)) / (theta ** 3) if theta != 0 else 1 / 6
         V = I + A * wx + B * wx2
-        t = V.dot(t)
+        t = V.dot(t)"""
 
         T = np.eye(4)
         T[0:3, 0:3] = R
