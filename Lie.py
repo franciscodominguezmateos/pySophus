@@ -3,6 +3,7 @@ Created on Mar 2, 2016
 
 @author: Francisco Dominguez
 '''
+from __future__ import division
 import numpy as np
 
 
@@ -291,7 +292,6 @@ class SO3(Group):
             w = np.pi * w
             return so3(vector=w)
         else:
-            # [0,0] added at the end because trace returns a matrix
             cs = (np.trace(self.M) - 1) / 2
             theta = np.arccos(cs)
             sn = np.sin(theta)
@@ -373,7 +373,9 @@ class so3(Algebra):
         cs = np.cos(theta)
         sn = np.sin(theta)
         I = np.eye(3)
-        R = I + (sn / theta) * wx + ((1 - cs) / theta ** 2) * wx.dot(wx) if theta != 0 else I
+        a = (sn / theta) if theta != 0 else 1
+        b = ((1 - cs) / theta ** 2) if theta != 0 else 1 / 2.0
+        R = I + a * wx + b * wx.dot(wx)
         return SO3(R)
 
     def vector(self):
@@ -426,16 +428,14 @@ class SE3(Group):
         w = SO3(R).log()
         t = self.M[0:3, 3]
 
-        """I = np.eye(3)
+        I = np.eye(3)
         theta = w.magnitude()
         wx = w.matrix()
         wx2 = wx.dot(wx)
-        A = np.sin(theta) / theta if theta != 0 else 1
-        B = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
-        V = I - 1 / 2 * wx + 1 / (theta ** 2) * (1 - A / (2 * B)) * wx2 if theta != 0 else I
+        a = (1 / theta**2) * (1 - (theta * np.sin(theta)) / (2 * (1 - np.cos(theta)))) if theta != 0 else 1 / 12
+        V = I - 1 / 2.0 * wx + a * wx2
 
-        v = V.dot(t)"""
-        v=t
+        v = V.dot(t)
 
         return se3(vector=np.append(w.vector(), v))
 
@@ -528,14 +528,14 @@ class se3(Algebra):
         R = w.exp().matrix()
         t = self.w[3:6]
 
-        """theta = w.magnitude()
+        theta = w.magnitude()
         I = np.eye(3)
         wx = w.matrix()
         wx2 = wx.dot(wx)
-        A = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2
-        B = (theta - np.sin(theta)) / (theta ** 3) if theta != 0 else 1 / 6
+        A = (1 - np.cos(theta)) / (theta ** 2) if theta != 0 else 1 / 2.0
+        B = (theta - np.sin(theta)) / (theta ** 3) if theta != 0 else 1 / 6.0
         V = I + A * wx + B * wx2
-        t = V.dot(t)"""
+        t = V.dot(t)
 
         T = np.eye(4)
         T[0:3, 0:3] = R

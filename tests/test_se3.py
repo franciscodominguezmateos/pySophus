@@ -5,8 +5,8 @@ from Lie import *
 
 class TestSe3(TestCase):
     def setUp(self):
-        testvalues = np.linspace(-1, 1, num=1 + 8) * np.pi
-        tens = np.power(10, np.linspace(0, 4, 5))
+        testvalues = np.linspace(-0.1, 0.1, num=1 + 16) * np.pi
+        tens = np.power(10, np.linspace(10, 21, 5))
         smallvalues = list(map(lambda a: 1 / a, tens))
         testvalues = np.append(testvalues, smallvalues)
 
@@ -30,6 +30,8 @@ class TestSe3(TestCase):
             ok = equalWithError(a, b, error=0.0001)
             if not ok:
                 passed = False
+                a = e.exp().matrix()
+                b = e.exp().log().exp().matrix()
                 print("Error with ", e.vector())
         self.assertTrue(passed, "Error in rotations")
 
